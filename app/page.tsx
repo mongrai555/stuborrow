@@ -91,11 +91,11 @@ export default function LandingPage() {
               <span className="text-white">GEAR</span>
             </div>
             <div className="flex items-center gap-6">
-              <Link href="/login" className="text-gray-300 hover:text-white transition-all font-medium text-lg">
-                สมาชิก
-              </Link>
               <Link href="/login" className="px-6 py-2.5 bg-transparent border border-neonBlue text-neonBlue rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon transition-all font-bold tracking-wide backdrop-blur-sm">
-                Login / Register
+                Login
+              </Link>
+              <Link href="/signup" className="px-6 py-2.5 bg-transparent border border-neonBlue text-neonBlue rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon transition-all font-bold tracking-wide backdrop-blur-sm">
+                Register
               </Link>
             </div>
           </div>
