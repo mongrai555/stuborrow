@@ -1,168 +1,162 @@
 "use client";
-import { useState } from "react";
 
-// Mock Data: ข้อมูลอุปกรณ์ทั้งหมดในคลัง
-const allEquipments = [
-  { id: 1, name: "Sony A7 IV", category: "Camera", status: "Available", image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400&auto=format&fit=crop" },
-  { id: 2, name: "Canon EOS R6", category: "Camera", status: "Borrowed", image: "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?q=80&w=400&auto=format&fit=crop" },
-  { id: 3, name: "DJI Ronin RS 3", category: "Stabilizer", status: "Available", image: "https://images.unsplash.com/photo-1622615456247-f7e91eb70a1d?q=80&w=400&auto=format&fit=crop" },
-  { id: 4, name: "Godox SL60W", category: "Lighting", status: "Available", image: "https://images.unsplash.com/photo-1582294459828-4444a86f7c9e?q=80&w=400&auto=format&fit=crop" },
-  { id: 5, name: "Rode Wireless GO II", category: "Audio", status: "Available", image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop" },
-  { id: 6, name: "Zoom H5 Recorder", category: "Audio", status: "Borrowed", image: "https://images.unsplash.com/photo-1596525547514-6ccfb5f9d268?q=80&w=400&auto=format&fit=crop" },
-  { id: 7, name: "Aperture Amaran 100d", category: "Lighting", status: "Available", image: "https://images.unsplash.com/photo-1550684376-efcbd6e3f031?q=80&w=400&auto=format&fit=crop" },
-  { id: 8, name: "Tripod Manfrotto", category: "Accessory", status: "Available", image: "https://images.unsplash.com/photo-1527011045970-1aa7a1ccfccb?q=80&w=400&auto=format&fit=crop" },
-];
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import Link from 'next/link';
 
-const categories = ["All", "Camera", "Lighting", "Audio", "Stabilizer", "Accessory"];
+const Discover = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-export default function DiscoverPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All");
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-  // ฟังก์ชันกรองอุปกรณ์ตามการค้นหาและหมวดหมู่
-  const filteredEquipments = allEquipments.filter((gear) => {
-    const matchCategory = activeCategory === "All" || gear.category === activeCategory;
-    const matchSearch = gear.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCategory && matchSearch;
-  });
+    useEffect(() => {
+        const fetchItems = async () => {
+            try {
+                const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+                const headers: any = token ? { Authorization: `Bearer ${token}` } : {};
 
-  const handleBorrowClick = (gearName: string, status: string) => {
-    if (status === "Borrowed") {
-      alert(`ขออภัยครับ ${gearName} ถูกยืมไปแล้ว 🥲`);
-    } else {
-      // อนาคตจะเปลี่ยนเป็นเปิด Modal ยืนยันการยืม
-      alert(`เพิ่ม ${gearName} ลงในรายการขอหยิบยืมเรียบร้อย! 🛒`);
-    }
-  };
+                const response = await axios.get(`${API_BASE_URL}/equipments`, {
+                    headers,
+                    withCredentials: true,
+                });
+                setProducts(response.data);
+            } catch (error: any) {
+                // If the API returns 401, redirect the user to login
+                if (error?.response?.status === 401) {
+                    console.warn('Unauthorized - redirecting to login');
+                    if (typeof window !== 'undefined') window.location.href = '/login';
+                    return;
+                }
+                console.error("Error fetching equipments:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchItems();
+    }, [API_BASE_URL]);
 
-  return (
-    <div className="p-6 md:p-10 max-w-7xl mx-auto w-full animate-fade-in font-sans">
-      
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-6">
-        <div>
-          <h1 className="text-4xl font-bold text-white tracking-wide mb-2 flex items-center gap-3">
-            <div className="w-2 h-8 bg-neonBlue shadow-neon"></div>
-            DISCOVER <span className="text-neonBlue drop-shadow-neon">GEAR</span>
-          </h1>
-          <p className="text-gray-400">ค้นหาและเลือกยืมอุปกรณ์ที่ต้องการสำหรับโปรเจกต์ของคุณ</p>
-        </div>
-
-        {/* Search Bar */}
-        <div className="w-full md:w-72 relative">
-          <input 
-            type="text" 
-            placeholder="ค้นหาชื่ออุปกรณ์..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-darkPanel border border-gray-700 rounded-lg py-2.5 pl-10 pr-4 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-          />
-          <svg className="w-5 h-5 absolute left-3 top-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Category Filters */}
-      <div className="flex flex-wrap gap-3 mb-10 border-b border-gray-800 pb-6">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-              activeCategory === cat
-                ? "bg-neonBlue text-black shadow-neon"
-                : "bg-darkPanel border border-gray-700 text-gray-400 hover:border-neonBlue hover:text-white"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
-
-      {/* Grid อุปกรณ์ */}
-      {filteredEquipments.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredEquipments.map((gear) => (
-            <div 
-              key={gear.id} 
-              className={`bg-darkPanel border rounded-2xl overflow-hidden flex flex-col transition-all duration-500 group ${
-                gear.status === "Available" 
-                  ? "border-gray-800 hover:border-neonBlue hover:shadow-neon" 
-                  : "border-gray-800 opacity-75" // ลดความสว่างลงถ้าของไม่ว่าง
-              }`}
-            >
-              {/* Image Section */}
-              <div className="h-48 w-full relative overflow-hidden bg-gray-900">
-                <img 
-                  src={gear.image} 
-                  alt={gear.name} 
-                  className={`w-full h-full object-cover transition-transform duration-700 ${gear.status === "Available" ? "group-hover:scale-110" : "grayscale"}`} 
-                />
-                
-                {/* Status Badge */}
-                <div className="absolute top-3 left-3 z-20">
-                  {gear.status === "Available" ? (
-                    <span className="bg-green-500/20 text-green-400 border border-green-500/50 px-2 py-1 rounded-md text-xs font-bold backdrop-blur-md flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></div>
-                      พร้อมยืม
-                    </span>
-                  ) : (
-                    <span className="bg-red-500/20 text-red-400 border border-red-500/50 px-2 py-1 rounded-md text-xs font-bold backdrop-blur-md flex items-center gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>
-                      ถูกยืมแล้ว
-                    </span>
-                  )}
+    // UI ตอนกำลังโหลดข้อมูล (Skeleton Loading - Dark Theme)
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-black pt-10">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="animate-pulse space-y-8">
+                        <div className="h-10 bg-zinc-800 rounded-lg w-1/4"></div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            {[1, 2, 3, 4].map((n) => (
+                                <div key={n} className="bg-zinc-900 rounded-2xl h-80 border border-zinc-800"></div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-
-                {/* Category Badge */}
-                <div className="absolute top-3 right-3 z-20 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-gray-700 text-xs text-gray-300">
-                  {gear.category}
-                </div>
-              </div>
-              
-              {/* Content Section */}
-              <div className="p-5 flex flex-col flex-1 justify-between gap-5 relative z-20">
-                <h3 className={`text-xl font-bold transition-colors ${gear.status === "Available" ? "text-white group-hover:text-neonBlue" : "text-gray-400"}`}>
-                  {gear.name}
-                </h3>
-                
-                {/* ปุ่มยืม */}
-                <button 
-                  onClick={() => handleBorrowClick(gear.name, gear.status)}
-                  disabled={gear.status !== "Available"}
-                  className={`w-full py-2.5 rounded-lg font-bold transition-all flex justify-center items-center gap-2 ${
-                    gear.status === "Available"
-                      ? "bg-transparent border border-neonBlue text-neonBlue hover:bg-neonBlue hover:text-black hover:shadow-neon"
-                      : "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
-                  }`}
-                >
-                  {gear.status === "Available" ? (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      เพิ่มลงตะกร้า
-                    </>
-                  ) : (
-                    "ไม่พร้อมให้บริการ"
-                  )}
-                </button>
-              </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        /* กรณีค้นหาแล้วไม่เจอ */
-        <div className="text-center py-20 bg-darkPanel rounded-2xl border border-gray-800">
-          <svg className="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="text-xl font-bold text-gray-300 mb-2">ไม่พบอุปกรณ์ที่คุณค้นหา</h3>
-          <p className="text-gray-500">ลองใช้คำค้นหาอื่น หรือเปลี่ยนหมวดหมู่ดูนะ</p>
-        </div>
-      )}
+        );
+    }
 
-    </div>
-  );
-}
+    return (
+        <div className="min-h-screen bg-black pb-20 font-sans">
+            {/* Header Section */}
+            <div className="bg-black border-b border-zinc-800 mb-10">
+                <div className="max-w-7xl mx-auto px-6 py-12">
+                    <h1 className="text-4xl font-extrabold text-white tracking-tight">
+                        Discover <span className="text-blue-500">Equipments</span>
+                    </h1>
+                    <p className="mt-3 text-lg text-zinc-400 max-w-2xl">
+                        สำรวจและเลือกจองอุปกรณ์คุณภาพสูงจาก CSMJU Studio สำหรับโปรเจกต์ของคุณ
+                    </p>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="max-w-7xl mx-auto px-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                    {products.length > 0 ? (
+                        products.map((item) => {
+                            const isAvailable = item.status === 'Available';
+                            
+                            return (
+                                <div 
+                                    key={item._id} 
+                                    className="group flex flex-col bg-zinc-900 rounded-2xl shadow-lg border border-zinc-800 overflow-hidden hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-[0_0_20px_rgba(59,130,246,0.15)] transition-all duration-300"
+                                >
+                                    {/* Image Container */}
+                                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-zinc-800">
+                                        <img 
+                                            src={item.imageUrl || 'https://via.placeholder.com/400x300/3f3f46/ffffff?text=No+Image'} 
+                                            alt={item.name}
+                                            className="w-full h-full object-cover opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 ease-in-out"
+                                        />
+                                        
+                                        {/* Floating Status Badge (Dark Mode) */}
+                                        <div className="absolute top-3 right-3">
+                                            <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md ${
+                                                isAvailable 
+                                                ? 'bg-black/60 text-green-400 border border-green-500/30' 
+                                                : 'bg-black/60 text-red-400 border border-red-500/30'
+                                            }`}>
+                                                <span className={`w-2 h-2 rounded-full ${isAvailable ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]'}`}></span>
+                                                {isAvailable ? 'พร้อมใช้งาน' : 'ไม่ว่าง'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Content Section */}
+                                    <div className="p-5 flex flex-col flex-grow">
+                                        <div className="mb-2">
+                                            <span className="text-blue-400 text-xs font-bold uppercase tracking-wider">
+                                                {item.category || 'อุปกรณ์'}
+                                            </span>
+                                            <h3 className="text-lg font-bold text-white mt-1 line-clamp-1 group-hover:text-blue-400 transition-colors">
+                                                {item.name}
+                                            </h3>
+                                        </div>
+                                        
+                                        <p className="text-zinc-400 text-sm leading-relaxed mb-6 line-clamp-2 flex-grow">
+                                            {item.note || 'ไม่มีรายละเอียดเพิ่มเติมสำหรับอุปกรณ์ชิ้นนี้'}
+                                        </p>
+                                        
+                                        {/* Footer: Price & Action */}
+                                        <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+                                            <div className="flex flex-col">
+                                                <span className="text-xs text-zinc-500 font-medium uppercase mb-0.5">ราคาเช่า</span>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-xl font-bold text-white">฿{item.price || '0'}</span>
+                                                    <span className="text-zinc-500 text-xs font-medium">/วัน</span>
+                                                </div>
+                                            </div>
+
+                                            <Link 
+                                                href={`/user/borrow/${item._id}`}
+                                                className={`inline-flex items-center justify-center px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                                                    isAvailable 
+                                                    ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-900/20' 
+                                                    : 'bg-zinc-800 text-zinc-500 cursor-not-allowed pointer-events-none'
+                                                }`}
+                                            >
+                                                {isAvailable ? 'จองอุปกรณ์' : 'ไม่สามารถจองได้'}
+                                            </Link>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    ) : (
+                        /* Empty State (Dark Mode) */
+                        <div className="col-span-full flex flex-col items-center justify-center py-20 px-4 bg-zinc-900 rounded-3xl border border-dashed border-zinc-700">
+                            <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center mb-4 border border-zinc-800">
+                                <svg className="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-bold text-white mb-1">ยังไม่มีอุปกรณ์ในระบบ</h3>
+                            <p className="text-zinc-400 text-sm text-center">อุปกรณ์ทั้งหมดอาจถูกยืมไปแล้ว หรือยังไม่มีการเพิ่มข้อมูลในขณะนี้</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Discover;
