@@ -174,13 +174,17 @@ export default function AdminInboxPage() {
                       {item?.equipment?.name || <span className="text-gray-600 italic font-normal">ไม่มีข้อมูลอุปกรณ์</span>}
                     </h3>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 mt-3 text-xs text-gray-400 font-medium">
+                    {/* 🌟 ปรับปรุง Grid แสดงข้อมูลตรงนี้ 🌟 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 mt-3 text-xs text-gray-400 font-medium">
                       <p>👤 ผู้ยืม: <span className="text-gray-200">{item?.user?.name || "ไม่ระบุชื่อ"}</span></p>
+                      <p>📦 S/N: <span className="text-gray-200 font-mono">{item?.equipment?.serialNumber || "-"}</span></p>
                       <p>📅 วันที่รับ: <span className="text-gray-200">
                         {item?.borrowDate ? new Date(item.borrowDate).toLocaleDateString('th-TH') : "-"}
                       </span></p>
-                      <p>⏰ เวลานัดรับ: <span className="text-neonBlue font-bold">{item?.pickupTime || "ไม่ได้ระบุ"} น.</span></p>
-                      <p>📦 S/N: <span className="text-gray-200 font-mono">{item?.equipment?.serialNumber || "-"}</span></p>
+                      <p>🔙 วันที่คืน: <span className="text-gray-200">
+                        {item?.expectedReturnDate ? new Date(item.expectedReturnDate).toLocaleDateString('th-TH') : "-"}
+                      </span></p>
+                      <p className="sm:col-span-2">⏰ เวลานัดรับ: <span className="text-neonBlue font-bold">{item?.pickupTime ? `${item.pickupTime} น.` : "ไม่ได้ระบุ"}</span></p>
                     </div>
                   </div>
 
@@ -206,10 +210,11 @@ export default function AdminInboxPage() {
                   </div>
                 </div>
 
+                {/* 🌟 ปรับกล่องหมายเหตุให้ชัดเจนขึ้นสำหรับ Admin 🌟 */}
                 {item?.borrowNote && (
-                  <div className="mt-2 p-3 bg-black/40 border-l-2 border-gray-600 rounded-r-lg">
-                    <p className="text-[10px] text-gray-500 uppercase font-black mb-1 tracking-tighter">Note:</p>
-                    <p className="text-xs text-gray-300 italic leading-relaxed">"{item.borrowNote}"</p>
+                  <div className="mt-2 p-3 bg-neonBlue/5 border-l-2 border-neonBlue rounded-r-lg">
+                    <p className="text-[10px] text-neonBlue uppercase font-black mb-1 tracking-widest">📝 หมายเหตุจากผู้ยืม:</p>
+                    <p className="text-xs text-gray-200 italic leading-relaxed">"{item.borrowNote}"</p>
                   </div>
                 )}
               </div>

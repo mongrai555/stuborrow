@@ -4,114 +4,144 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isStudent, setIsStudent] = useState(true);
+  const [loading, setLoading] = useState(false);
   
-  // Form States
-  const [studentId, setStudentId] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  
-  const [adminUser, setAdminUser] = useState("");
-  const [adminPass, setAdminPass] = useState("");
+  const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleStudentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    router.push("/user/discover"); // จำลองการ Login สำเร็จ ไปหน้ายืมของ
+  const decodeToken = (token: string) => {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error("Token decoding failed", error);
+      return null;
+    }
   };
 
-  const handleAdminSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminUser === "studio" && adminPass === "CSstudio.") {
-      router.push("/admin/dashboard");
-    } else {
-      alert("Admin Username หรือ Password ไม่ถูกต้อง!");
+    setLoading(true);
+
+    try {
+      const API_URL = "http://localhost:3000/auth/login"; 
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, password })
+      });
+      
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.access_token) {
+        localStorage.setItem("access_token", data.access_token);
+        const decodedInfo = decodeToken(data.access_token);
+        const userRole = decodedInfo?.role || data.role || "student"; 
+        localStorage.setItem("user_role", userRole);
+
+        if (userRole === "admin" || userRole === "Admin") {
+          router.push("/admin/dashboard");
+        } else {
+          router.push("/user/discover");
+        }
+      } else {
+        alert(`เข้าสู่ระบบไม่สำเร็จ: ${data.message || "รหัสผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง"}`);
+      }
+    } catch (error) {
+      console.error("Login Error:", error);
+      alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับเซิร์ฟเวอร์");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 text-white font-sans">
-      <div className="bg-darkPanel border border-neonBlue/30 shadow-neon rounded-2xl p-8 w-full max-w-md transition-all duration-300">
-        
-        <h1 className="text-3xl font-bold text-center text-neonBlue mb-6 tracking-wider drop-shadow-neon">
-          STUDIO <span className="text-white">GEAR</span>
-        </h1>
+    <div className="relative min-h-screen flex items-center justify-center p-4 text-white font-sans overflow-hidden">
+      
+      {/* 1. ส่วนของ Video Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute inset-0 bg-black/40 z-10"></div>
+        <iframe
+          src="https://www.youtube.com/embed/OjX7v-9UQVo?autoplay=1&mute=1&loop=1&playlist=OjX7v-9UQVo&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1"
+          className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] -translate-x-1/2 -translate-y-1/2 object-cover"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+        ></iframe>
+      </div>
 
-        {/* Tab Selection */}
-        <div className="flex mb-8 bg-gray-900 rounded-lg p-1">
-          <button
-            onClick={() => setIsStudent(true)}
-            className={`flex-1 py-2 rounded-md transition-all ${
-              isStudent ? "bg-neonBlue text-black font-bold shadow-neon" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            นักศึกษา
-          </button>
-          <button
-            onClick={() => setIsStudent(false)}
-            className={`flex-1 py-2 rounded-md transition-all ${
-              !isStudent ? "bg-neonBlue text-black font-bold shadow-neon" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            ผู้ดูแลระบบ
-          </button>
+      {/* 2. ส่วนของฟอร์ม Login (ถอดการเรืองแสงออกแล้ว) */}
+      <div className="relative z-20 bg-black/60 backdrop-blur-lg border border-white/20 rounded-2xl p-8 w-full max-w-sm transition-all duration-300">
+        
+        {loading && (
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-10 flex items-center justify-center rounded-2xl">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+              <div className="text-white font-mono text-xs tracking-widest">VERIFYING...</div>
+            </div>
+          </div>
+        )}
+
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-black text-white tracking-wider">
+            STUDIO <span className="text-gray-400">GEAR</span>
+          </h1>
+          <p className="text-gray-400 text-xs tracking-widest uppercase mt-2">
+            เข้าสู่ระบบ
+          </p>
         </div>
 
-        {/* Forms */}
-        {isStudent ? (
-          <form onSubmit={handleStudentSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">รหัสนักศึกษา</label>
-              <input 
-                type="text" required placeholder="เช่น 6704101325"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                value={studentId} onChange={(e) => setStudentId(e.target.value)}
-              />
-            </div>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="block text-sm text-gray-400 mb-1">ชื่อ</label>
-                <input 
-                  type="text" required placeholder="ชื่อจริง"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                  value={firstName} onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm text-gray-400 mb-1">นามสกุล</label>
-                <input 
-                  type="text" required placeholder="นามสกุล"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                  value={lastName} onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
-            <button type="submit" className="mt-4 w-full bg-transparent border border-neonBlue text-neonBlue font-bold py-3 rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon-hover transition-all">
-              ลงทะเบียน / เข้าสู่ระบบ
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-gray-400 uppercase font-bold tracking-widest pl-1">
+              User ID
+            </label>
+            <input 
+              type="text" 
+              required 
+              placeholder="กรอกรหัสผู้ใช้งาน"
+              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/50 transition-all"
+              value={userId} 
+              onChange={(e) => setUserId(e.target.value)}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] text-gray-400 uppercase font-bold tracking-widest pl-1">
+              Password
+            </label>
+            <input 
+              type="password" 
+              required 
+              placeholder="••••••••"
+              className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/50 transition-all"
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <button 
+            type="submit" 
+            disabled={loading} 
+            className="mt-6 w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-200 active:scale-95 transition-all uppercase tracking-widest text-sm"
+          >
+            {loading ? "Please Wait..." : "Sign In"}
+          </button>
+
+          <div className="mt-4 text-center text-sm text-gray-400">
+            ยังไม่มีบัญชีใช่ไหม?{" "}
+            <button 
+              type="button"
+              onClick={() => router.push('/signup')}
+              className="text-white hover:underline font-medium transition-colors"
+            >
+              ลงทะเบียน
             </button>
-          </form>
-        ) : (
-          <form onSubmit={handleAdminSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Username</label>
-              <input 
-                type="text" required placeholder="Admin Username"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                value={adminUser} onChange={(e) => setAdminUser(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Password</label>
-              <input 
-                type="password" required placeholder="••••••••"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                value={adminPass} onChange={(e) => setAdminPass(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="mt-4 w-full bg-transparent border border-neonBlue text-neonBlue font-bold py-3 rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon-hover transition-all">
-              เข้าสู่ระบบ Admin
-            </button>
-          </form>
-        )}
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -63,9 +63,9 @@ export default function SignupPage() {
         <div className="absolute inset-0 bg-black/40 z-10"></div>
         
         {/* Iframe สำหรับ YouTube */}
-        {/* ใช้เทคนิค CSS เพื่อให้วิดีโอเต็มจอโดยไม่มีขอบดำ */}
+        {/* 🌟 เปลี่ยนรหัสวิดีโอตรง embed/ และ playlist= ให้เป็น BpURtzXRo10 🌟 */}
         <iframe
-          src="https://www.youtube.com/embed/Ysep_T2jXBE?autoplay=1&mute=1&loop=1&playlist=Ysep_T2jXBE&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1"
+          src="https://www.youtube.com/embed/BpURtzXRo10?autoplay=1&mute=1&loop=1&playlist=BpURtzXRo10&controls=0&showinfo=0&rel=0&iv_load_policy=3&modestbranding=1"
           className="absolute top-1/2 left-1/2 w-[100vw] h-[56.25vw] min-h-[100vh] min-w-[177.77vh] -translate-x-1/2 -translate-y-1/2 object-cover"
           allow="autoplay; encrypted-media"
           allowFullScreen
