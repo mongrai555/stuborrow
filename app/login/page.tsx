@@ -1,30 +1,72 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+
+interface DecodedToken {
+  role: string;
+  [key: string]: any;
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isStudent, setIsStudent] = useState(true);
   
   // Form States
-  const [studentId, setStudentId] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  
-  const [adminUser, setAdminUser] = useState("");
-  const [adminPass, setAdminPass] = useState("");
+  const [userId, setUserId] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleStudentSubmit = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push("/user/discover"); // จำลองการ Login สำเร็จ ไปหน้ายืมของ
-  };
+    setError("");
+    setIsLoading(true);
 
-  const handleAdminSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (adminUser === "studio" && adminPass === "CSstudio.") {
-      router.push("/admin/dashboard");
-    } else {
-      alert("Admin Username หรือ Password ไม่ถูกต้อง!");
+    try {
+      const response = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: userId,
+          password: password,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "เข้าสู่ระบบล้มเหลว");
+      }
+
+      const data = await response.json();
+      const token = data.access_token;
+
+      if (!token) {
+        throw new Error("ไม่ได้รับ Token จากเซิร์ฟเวอร์");
+      }
+
+      // Decode token to get role
+      const decodedToken = jwtDecode<DecodedToken>(token);
+      const role = decodedToken.role?.toLowerCase();
+
+      // Store token in localStorage
+      localStorage.setItem("access_token", token);
+
+      // Route based on role
+      if (role === "admin") {
+        router.push("/admin/dashboard");
+      } else if (role === "student") {
+        router.push("/user/discover");
+      } else {
+        throw new Error("บทบาทผู้ใช้ไม่ถูกต้อง");
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "เกิดข้อผิดพลาด";
+      setError(errorMessage);
+      console.error("Login error:", err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -36,83 +78,48 @@ export default function LoginPage() {
           STUDIO <span className="text-white">GEAR</span>
         </h1>
 
-        {/* Tab Selection */}
-        <div className="flex mb-8 bg-gray-900 rounded-lg p-1">
-          <button
-            onClick={() => setIsStudent(true)}
-            className={`flex-1 py-2 rounded-md transition-all ${
-              isStudent ? "bg-neonBlue text-black font-bold shadow-neon" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            นักศึกษา
-          </button>
-          <button
-            onClick={() => setIsStudent(false)}
-            className={`flex-1 py-2 rounded-md transition-all ${
-              !isStudent ? "bg-neonBlue text-black font-bold shadow-neon" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            ผู้ดูแลระบบ
-          </button>
-        </div>
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">รหัสผู้ใช้</label>
+            <input 
+              type="text"
+              required
+              placeholder="เลข 10 หลัก"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-gray-400 mb-1">รหัสผ่าน</label>
+            <input 
+              type="password"
+              required
+              placeholder="รหัส 6 ตัวขึ้นไป"
+              className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+            />
+          </div>
 
-        {/* Forms */}
-        {isStudent ? (
-          <form onSubmit={handleStudentSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">รหัสนักศึกษา</label>
-              <input 
-                type="text" required placeholder="เช่น 6704101325"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                value={studentId} onChange={(e) => setStudentId(e.target.value)}
-              />
+          {error && (
+            <div className="bg-red-500/20 border border-red-500 text-red-400 text-sm p-3 rounded-lg">
+              {error}
             </div>
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <label className="block text-sm text-gray-400 mb-1">ชื่อ</label>
-                <input 
-                  type="text" required placeholder="ชื่อจริง"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                  value={firstName} onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div className="flex-1">
-                <label className="block text-sm text-gray-400 mb-1">นามสกุล</label>
-                <input 
-                  type="text" required placeholder="นามสกุล"
-                  className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                  value={lastName} onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
-            <button type="submit" className="mt-4 w-full bg-transparent border border-neonBlue text-neonBlue font-bold py-3 rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon-hover transition-all">
-              ลงทะเบียน / เข้าสู่ระบบ
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleAdminSubmit} className="flex flex-col gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Username</label>
-              <input 
-                type="text" required placeholder="Admin Username"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                value={adminUser} onChange={(e) => setAdminUser(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Password</label>
-              <input 
-                type="password" required placeholder="••••••••"
-                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
-                value={adminPass} onChange={(e) => setAdminPass(e.target.value)}
-              />
-            </div>
-            <button type="submit" className="mt-4 w-full bg-transparent border border-neonBlue text-neonBlue font-bold py-3 rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon-hover transition-all">
-              เข้าสู่ระบบ Admin
-            </button>
-          </form>
-        )}
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="mt-4 w-full bg-transparent border border-neonBlue text-neonBlue font-bold py-3 rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "กำลังเข้าสู่ระบบ..." : "เข้าสู่ระบบ"}
+          </button>
+        </form>
       </div>
     </div>
-  );
-}
+  )
+};

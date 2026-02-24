@@ -10,8 +10,8 @@ export default function HistoryPage() {
   ]);
 
   const cancelBooking = (id: string) => {
-    if(confirm("คุณต้องการยกเลิกการจองนี้ใช่หรือไม่?")) {
-       setMyBookings(myBookings.filter(b => b.id !== id));
+    if (confirm("คุณต้องการยกเลิกการจองนี้ใช่หรือไม่?")) {
+      setMyBookings(myBookings.filter(b => b.id !== id));
     }
   };
 
@@ -38,11 +38,10 @@ export default function HistoryPage() {
                 <td className="p-4 text-white font-medium">{b.gear}</td>
                 <td className="p-4 text-gray-400">{b.date}</td>
                 <td className="p-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    b.status === "PENDING" ? "bg-yellow-500/20 text-yellow-500" :
-                    b.status === "APPROVED" ? "bg-green-500/20 text-green-500" :
-                    "bg-gray-500/20 text-gray-400"
-                  }`}>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${b.status === "PENDING" ? "bg-yellow-500/20 text-yellow-500" :
+                      b.status === "APPROVED" ? "bg-green-500/20 text-green-500" :
+                        "bg-gray-500/20 text-gray-400"
+                    }`}>
                     {b.status}
                   </span>
                 </td>
@@ -60,4 +59,4 @@ export default function HistoryPage() {
       </div>
     </div>
   );
-}
+} //อันนี้คือที่มีอยู่
