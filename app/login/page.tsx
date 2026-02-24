@@ -3,132 +3,115 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [userId, setUserId] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const [isStudent, setIsStudent] = useState(true);
+  
+  // Form States
+  const [studentId, setStudentId] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  
+  const [adminUser, setAdminUser] = useState("");
+  const [adminPass, setAdminPass] = useState("");
 
-  // 1. ฟังก์ชันสำหรับถอดรหัส JWT Token
-  const decodeJWT = (token: string) => {
-    try {
-      // Token จะมี 3 ส่วนคั่นด้วยจุด (.) เราเอาส่วนที่ 2 (Payload) มาถอดรหัส Base64
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        window.atob(base64)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-      return JSON.parse(jsonPayload);
-    } catch (error) {
-      console.error("Invalid token format");
-      return null;
-    }
+  const handleStudentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push("/user/discover"); // จำลองการ Login สำเร็จ ไปหน้ายืมของ
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleAdminSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await fetch("http://localhost:3000/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, password }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.access_token) {
-        // 2. เก็บ Token ลง localStorage
-        localStorage.setItem("access_token", data.access_token);
-        
-        // 3. ถอดรหัส Token เพื่อเอาข้อมูล User & Role
-        const decodedUser = decodeJWT(data.access_token);
-        
-        if (decodedUser) {
-          // เก็บข้อมูล User ที่แกะมาจาก Token ลง localStorage ด้วย (เอาไว้แสดงชื่อมุมขวาบน)
-          localStorage.setItem("user", JSON.stringify(decodedUser));
-          
-          // 4. เช็ค Role จาก Token โดยตรง (แปลงเป็นพิมพ์เล็กเพื่อป้องกันบั๊ก)
-          // ⚠️ หมายเหตุ: ตรวจสอบให้แน่ใจว่าใน Payload ของ Token ใช้ key ชื่อ role 
-          const userRole = decodedUser.role?.toLowerCase(); 
-
-          if (userRole === "student") {
-            router.push("user/discover"); // 🎓 ไปหน้ายืมของ
-          } else {
-            router.push("/admin/booking"); // 🛡️ ไปหน้าจัดการแอดมิน
-          }
-        } else {
-          setError("เกิดข้อผิดพลาดในการอ่านข้อมูล Token");
-        }
-
-      } else {
-        setError(data.message || "Login failed. Please check your ID/Password.");
-      }
-    } catch (err) {
-      setError("Cannot connect to server. Is your backend running?");
-    } finally {
-      setLoading(false);
+    if (adminUser === "studio" && adminPass === "CSstudio.") {
+      router.push("/admin/dashboard");
+    } else {
+      alert("Admin Username หรือ Password ไม่ถูกต้อง!");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black p-6">
-      <div className="w-full max-w-md bg-darkPanel border border-gray-800 p-8 rounded-3xl shadow-2xl animate-fade-in">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white tracking-tight">
-            SIGN <span className="text-neonBlue">IN</span>
-          </h1>
-          <p className="text-gray-500 text-sm mt-2">Enter your credentials to access system</p>
-        </div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 text-white font-sans">
+      <div className="bg-darkPanel border border-neonBlue/30 shadow-neon rounded-2xl p-8 w-full max-w-md transition-all duration-300">
+        
+        <h1 className="text-3xl font-bold text-center text-neonBlue mb-6 tracking-wider drop-shadow-neon">
+          STUDIO <span className="text-white">GEAR</span>
+        </h1>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-xs uppercase tracking-widest text-gray-400 mb-2 font-bold">User ID</label>
-            <input
-              type="text"
-              required
-              className="w-full bg-white/5 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neonBlue transition-all"
-              placeholder="Enter your ID"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs uppercase tracking-widest text-gray-400 mb-2 font-bold">Password</label>
-            <input
-              type="password"
-              required
-              className="w-full bg-white/5 border border-gray-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-neonBlue transition-all"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-xs p-3 rounded-lg text-center">
-              {error}
-            </div>
-          )}
-
+        {/* Tab Selection */}
+        <div className="flex mb-8 bg-gray-900 rounded-lg p-1">
           <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-4 rounded-xl font-bold uppercase tracking-widest transition-all ${
-              loading 
-              ? "bg-gray-700 text-gray-400 cursor-not-allowed" 
-              : "bg-white text-black hover:bg-neonBlue hover:shadow-neon"
+            onClick={() => setIsStudent(true)}
+            className={`flex-1 py-2 rounded-md transition-all ${
+              isStudent ? "bg-neonBlue text-black font-bold shadow-neon" : "text-gray-400 hover:text-white"
             }`}
           >
-            {loading ? "Authenticating..." : "Login"}
+            นักศึกษา
           </button>
-        </form>
+          <button
+            onClick={() => setIsStudent(false)}
+            className={`flex-1 py-2 rounded-md transition-all ${
+              !isStudent ? "bg-neonBlue text-black font-bold shadow-neon" : "text-gray-400 hover:text-white"
+            }`}
+          >
+            ผู้ดูแลระบบ
+          </button>
+        </div>
+
+        {/* Forms */}
+        {isStudent ? (
+          <form onSubmit={handleStudentSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">รหัสนักศึกษา</label>
+              <input 
+                type="text" required placeholder="เช่น 6704101325"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
+                value={studentId} onChange={(e) => setStudentId(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="block text-sm text-gray-400 mb-1">ชื่อ</label>
+                <input 
+                  type="text" required placeholder="ชื่อจริง"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
+                  value={firstName} onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm text-gray-400 mb-1">นามสกุล</label>
+                <input 
+                  type="text" required placeholder="นามสกุล"
+                  className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
+                  value={lastName} onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+            </div>
+            <button type="submit" className="mt-4 w-full bg-transparent border border-neonBlue text-neonBlue font-bold py-3 rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon-hover transition-all">
+              ลงทะเบียน / เข้าสู่ระบบ
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleAdminSubmit} className="flex flex-col gap-4">
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Username</label>
+              <input 
+                type="text" required placeholder="Admin Username"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
+                value={adminUser} onChange={(e) => setAdminUser(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm text-gray-400 mb-1">Password</label>
+              <input 
+                type="password" required placeholder="••••••••"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:outline-none focus:border-neonBlue focus:shadow-neon transition-all"
+                value={adminPass} onChange={(e) => setAdminPass(e.target.value)}
+              />
+            </div>
+            <button type="submit" className="mt-4 w-full bg-transparent border border-neonBlue text-neonBlue font-bold py-3 rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon-hover transition-all">
+              เข้าสู่ระบบ Admin
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
