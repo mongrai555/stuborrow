@@ -1,43 +1,72 @@
+"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 export default function LandingPage() {
   const videoId = "tUuqWFExZgY"; 
   const roles = ["Camera man", "Editor", "Graphic", "Back stage", "Support"];
 
-  // Mock Data อุปกรณ์ตัวอย่าง (โชว์ที่หน้า Landing Page)
-  const previewGears = [
-    { id: 1, name: "Sony A7 IV", type: "Camera", image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?q=80&w=400&auto=format&fit=crop" },
-    { id: 2, name: "DJI Ronin RS 3", type: "Stabilizer", image: "https://images.unsplash.com/photo-1622615456247-f7e91eb70a1d?q=80&w=400&auto=format&fit=crop" },
-    { id: 3, name: "Godox SL60W", type: "Lighting", image: "https://images.unsplash.com/photo-1582294459828-4444a86f7c9e?q=80&w=400&auto=format&fit=crop" },
-    { id: 4, name: "Rode Wireless GO II", type: "Microphone", image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?q=80&w=400&auto=format&fit=crop" },
-  ];
+  // State สำหรับเก็บข้อมูลอุปกรณ์ที่ดึงจาก Backend
+  const [previewGears, setPreviewGears] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock รูปภาพ 20 รูปสำหรับ Facebook Gallery
+  // ดึงข้อมูลอุปกรณ์จาก API ของคุณ
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        // ใช้ URL หลังบ้านตามที่คุณระบุ
+        const response = await fetch("http://localhost:3000/equipments"); 
+        
+        if (response.ok) {
+          const data = await response.json();
+          // เช็คว่า API ส่งมาเป็น Array หรือซ้อนอยู่ใน Object
+          const products = Array.isArray(data) ? data : data.data || [];
+          
+          // ตัดมาโชว์หน้าแรกแค่ 4 ชิ้น
+          setPreviewGears(products.slice(0, 4));
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // ฟังก์ชันจัดการ Path รูปภาพ (เผื่อรูปใน Database เก็บเป็นชื่อไฟล์เฉยๆ หรือเป็น URL เต็ม)
+  const getImageUrl = (imagePath: string) => {
+    if (!imagePath) return "/logo/LOGO CSMJU Stroke.png"; // ถ้ารูปไม่มี ให้โชว์โลโก้สาขาแทน
+    if (imagePath.startsWith("http") || imagePath.startsWith("/")) return imagePath; 
+    return `http://localhost:3000/${imagePath}`; 
+  };
+
+  // รูปภาพ Gallery จากไฟล์ในโปรเจกต์ของคุณ
   const row1Images = [
     "/logo/gallery/work11.jpg",
-   "/logo/gallery/work12.jpg",
-   "/logo/gallery/work13.jpg",
-   "/logo/gallery/work14.jpg",
-   "/logo/gallery/work15.jpg",
-   "/logo/gallery/work16.jpg",
-   "/logo/gallery/work17.jpg",
-   "/logo/gallery/work18.jpg",
-   "/logo/gallery/work19.jpg",
-   "/logo/gallery/work20.jpg",
+    "/logo/gallery/work12.jpg",
+    "/logo/gallery/work13.jpg",
+    "/logo/gallery/work14.jpg",
+    "/logo/gallery/work15.jpg",
+    "/logo/gallery/work16.jpg",
+    "/logo/gallery/work17.jpg",
+    "/logo/gallery/work18.jpg",
+    "/logo/gallery/work19.jpg",
+    "/logo/gallery/work20.jpg",
   ];
 
-  // แถวที่ 2 (รูปที่ 11-20)
   const row2Images = [
-   "/logo/gallery/work1.jpg",
-   "/logo/gallery/work2.jpg",
-   "/logo/gallery/work3.jpg",
-   "/logo/gallery/work4.jpg",
-   "/logo/gallery/work5.jpg",
-   "/logo/gallery/work6.jpg",
-   "/logo/gallery/work7.jpg",
-   "/logo/gallery/work8.jpg",
-   "/logo/gallery/work9.jpg",
-   "/logo/gallery/work10.jpg",
+    "/logo/gallery/work1.jpg",
+    "/logo/gallery/work2.jpg",
+    "/logo/gallery/work3.jpg",
+    "/logo/gallery/work4.jpg",
+    "/logo/gallery/work5.jpg",
+    "/logo/gallery/work6.jpg",
+    "/logo/gallery/work7.jpg",
+    "/logo/gallery/work8.jpg",
+    "/logo/gallery/work9.jpg",
+    "/logo/gallery/work10.jpg",
   ];
 
   return (
@@ -45,7 +74,6 @@ export default function LandingPage() {
       
       {/* ================= SECTION 1: HERO (วิดีโอพื้นหลัง) ================= */}
       <section className="relative min-h-screen flex flex-col overflow-hidden">
-        {/* BACKGROUND VIDEO */}
         <div className="absolute inset-0 w-full h-full overflow-hidden z-0 pointer-events-none">
           <div className="absolute inset-0 bg-background/85 z-10 backdrop-blur-[2px]"></div>
           <iframe
@@ -56,10 +84,9 @@ export default function LandingPage() {
           ></iframe>
         </div>
 
-        {/* Navbar */}
         <header className="w-full border-b border-neonBlue/20 sticky top-0 z-50 bg-background/40 backdrop-blur-md shadow-[0_4px_20px_rgba(0,243,255,0.05)] relative">
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div className="text-2xl font-bold tracking-wider">
+            <div className="text-2xl font-bold tracking-wider cursor-pointer">
               <span className="text-neonBlue drop-shadow-neon">STUDIO</span>
               <span className="text-white">GEAR</span>
             </div>
@@ -74,7 +101,6 @@ export default function LandingPage() {
           </div>
         </header>
 
-        {/* Main Hero Content */}
         <main className="flex-1 max-w-7xl mx-auto w-full px-6 flex flex-col md:flex-row items-center justify-between gap-12 relative z-20 pb-20 md:pb-0">
           <div className="flex-1 flex flex-col items-start justify-center w-full mt-10 md:mt-0">
             <h1 className="text-5xl md:text-7xl font-black text-white mb-6 tracking-tight drop-shadow-xl">
@@ -104,7 +130,7 @@ export default function LandingPage() {
         </main>
       </section>
 
-      {/* ================= SECTION 2: อุปกรณ์ของเรา (GEAR SHOWCASE) ================= */}
+      {/* ================= SECTION 2: อุปกรณ์ของเรา (ดึงข้อมูลจาก DB) ================= */}
       <section className="py-24 bg-background relative z-20">
         <div className="max-w-7xl mx-auto px-6">
           
@@ -125,40 +151,55 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Grid โชว์อุปกรณ์ */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {previewGears.map((gear) => (
-              <div key={gear.id} className="bg-darkPanel border border-gray-800 rounded-2xl overflow-hidden group hover:border-neonBlue hover:shadow-neon transition-all duration-500 flex flex-col">
-                <div className="h-48 w-full overflow-hidden relative">
-                  <div className="absolute inset-0 bg-gradient-to-t from-darkPanel to-transparent z-10 opacity-60"></div>
-                  <img src={gear.image} alt={gear.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute top-3 right-3 z-20 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-gray-700 text-xs text-gray-300">
-                    {gear.type}
+          {loading ? (
+             <div className="text-center py-20 text-neonBlue font-bold animate-pulse">กำลังดึงข้อมูลอุปกรณ์จากหลังบ้าน...</div>
+          ) : previewGears.length === 0 ? (
+             <div className="text-center py-20 text-gray-500">ยังไม่มีข้อมูลอุปกรณ์ในระบบ</div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {previewGears.map((gear: any, index: number) => (
+                <div key={gear.id || gear._id || index} className="bg-darkPanel border border-gray-800 rounded-2xl overflow-hidden group hover:border-neonBlue hover:shadow-neon transition-all duration-500 flex flex-col">
+                  <div className="h-48 w-full overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-t from-darkPanel to-transparent z-10 opacity-60"></div>
+                    
+                    <img 
+                      src={getImageUrl(gear.image || gear.imageUrl || gear.picture)} 
+                      alt={gear.name || gear.productName || "Equipment"} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/logo/LOGO CSMJU Stroke.png";
+                      }}
+                    />
+                    
+                    <div className="absolute top-3 right-3 z-20 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full border border-gray-700 text-xs text-gray-300">
+                      {gear.category || "General"}
+                    </div>
+                  </div>
+                  
+                  <div className="p-5 flex flex-col flex-1 justify-between gap-4 relative z-20">
+                    <h3 className="text-xl font-bold text-white group-hover:text-neonBlue transition-colors truncate">
+                      {gear.name || gear.productName || "อุปกรณ์"}
+                    </h3>
+                    
+                    <Link 
+                      href="/login"
+                      className="w-full py-2.5 bg-gray-900 border border-gray-700 text-gray-300 text-center rounded-lg hover:bg-neonBlue hover:border-neonBlue hover:text-black font-bold hover:shadow-neon transition-all flex justify-center items-center gap-2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      ล็อกอินเพื่อยืม
+                    </Link>
                   </div>
                 </div>
-                
-                <div className="p-5 flex flex-col flex-1 justify-between gap-4 relative z-20">
-                  <h3 className="text-xl font-bold text-white group-hover:text-neonBlue transition-colors">{gear.name}</h3>
-                  
-                  {/* ปุ่มยืมอุปกรณ์ (วิ่งไปหน้า Login) */}
-                  <Link 
-                    href="/login"
-                    className="w-full py-2.5 bg-gray-900 border border-gray-700 text-gray-300 text-center rounded-lg hover:bg-neonBlue hover:border-neonBlue hover:text-black font-bold hover:shadow-neon transition-all flex justify-center items-center gap-2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                    ล็อกอินเพื่อยืม
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
         </div>
       </section>
 
-      {/* ================= SECTION 3: FACEBOOK GALLERY (รูปภาพผลงาน) ================= */}
+      {/* ================= SECTION 3: FACEBOOK GALLERY (รูปภาพจากโฟลเดอร์ในเครื่อง) ================= */}
       <section className="py-24 bg-darkPanel relative border-t border-neonBlue/20 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80%] h-[1px] bg-gradient-to-r from-transparent via-neonBlue to-transparent shadow-[0_0_15px_rgba(0,243,255,0.8)]"></div>
 
@@ -166,7 +207,7 @@ export default function LandingPage() {
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 tracking-wide">
             RECENT <span className="text-neonBlue drop-shadow-neon">WORKS</span>
           </h2>
-          <p className="text-gray-400 text-lg">อัปเดตผลงานและกิจกรรมล่าสุดจากเพจ CSMJU STUDIO</p>
+          <p className="text-gray-400 text-lg">ผลงานและกิจกรรมล่าสุดจากเพจ CSMJU STUDIO</p>
         </div>
 
         <div className="w-full overflow-hidden mb-6 flex">
