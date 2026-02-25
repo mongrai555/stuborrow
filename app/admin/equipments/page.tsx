@@ -52,7 +52,9 @@ export default function EquipmentManagement() {
       
       if (res.ok) {
         const data = await res.json();
-        setItems(data);
+        // เรียงลำดับให้อันล่าสุดอยู่ด้านบน
+        const sortedData = Array.isArray(data) ? [...data].reverse() : data;
+        setItems(sortedData);
       } else {
         console.error("Failed to fetch equipments. Token might be invalid or expired.");
       }

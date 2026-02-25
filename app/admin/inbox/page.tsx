@@ -30,10 +30,18 @@ export default function AdminInboxPage() {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
-          // ดึงเฉพาะ Pending และ Approved มาโชว์ใน Inbox
-          const initialFiltered = data.filter((item: any) => 
-            item && (item.status === "Pending" || item.status === "Approved" || item.status === "approved")
-          );
+          // 🌟 แก้ไขตรงนี้: ดึงเฉพาะ Pending/Approved และเรียงลำดับจากใหม่ไปเก่า 🌟
+          const initialFiltered = data
+            .filter((item: any) => 
+              item && (item.status === "Pending" || item.status === "Approved" || item.status === "approved")
+            )
+            .sort((a: any, b: any) => {
+              // ใช้ createdAt หรือ borrowDate ในการเรียงลำดับ (ใหม่สุดอยู่บน)
+              const dateA = new Date(a.createdAt || a.borrowDate || 0).getTime();
+              const dateB = new Date(b.createdAt || b.borrowDate || 0).getTime();
+              return dateB - dateA; 
+            });
+
           setBookings(initialFiltered);
         }
       } else {
@@ -49,7 +57,7 @@ export default function AdminInboxPage() {
   const handleUpdateStatus = async (id: string, itemName: string, currentStatus: string) => {
     if (!id) return;
 
-    // แก้ไขตรงนี้: ลองเปลี่ยน 'Approved' เป็น 'approved' (ตัวเล็ก) หากยังขึ้น 400
+    // เปลี่ยน 'Approved' เป็น 'approved' (ตัวเล็ก) หากยังขึ้น 400
     const nextStatus = (currentStatus === "Pending" || currentStatus === "pending") ? "Approved" : "Returned";
     
     if (!confirm(`ยืนยันการเปลี่ยนสถานะ [${itemName}] เป็น ${nextStatus}?`)) return;
@@ -76,7 +84,6 @@ export default function AdminInboxPage() {
         alert("อัปเดตสถานะสำเร็จ");
         fetchInboxData();
       } else {
-        // ถ้าขึ้น 400 alert นี้จะบอกสาเหตุที่ Backend บ่นมาครับ
         console.error("Update failed:", result);
         alert(`อัปเดตไม่สำเร็จ (${res.status}): ${result.message || "ข้อมูลไม่ถูกต้องหรือรูปแบบ ID ผิด"}`);
       }
@@ -174,7 +181,6 @@ export default function AdminInboxPage() {
                       {item?.equipment?.name || <span className="text-gray-600 italic font-normal">ไม่มีข้อมูลอุปกรณ์</span>}
                     </h3>
                     
-                    {/* 🌟 ปรับปรุง Grid แสดงข้อมูลตรงนี้ 🌟 */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 mt-3 text-xs text-gray-400 font-medium">
                       <p>👤 ผู้ยืม: <span className="text-gray-200">{item?.user?.name || "ไม่ระบุชื่อ"}</span></p>
                       <p>📦 S/N: <span className="text-gray-200 font-mono">{item?.equipment?.serialNumber || "-"}</span></p>
@@ -210,7 +216,6 @@ export default function AdminInboxPage() {
                   </div>
                 </div>
 
-                {/* 🌟 ปรับกล่องหมายเหตุให้ชัดเจนขึ้นสำหรับ Admin 🌟 */}
                 {item?.borrowNote && (
                   <div className="mt-2 p-3 bg-neonBlue/5 border-l-2 border-neonBlue rounded-r-lg">
                     <p className="text-[10px] text-neonBlue uppercase font-black mb-1 tracking-widest">📝 หมายเหตุจากผู้ยืม:</p>

@@ -95,7 +95,7 @@ export default function LandingPage() {
                 Login
               </Link>
               <Link href="/signup" className="px-6 py-2.5 bg-transparent border border-neonBlue text-neonBlue rounded-lg hover:bg-neonBlue hover:text-black hover:shadow-neon transition-all font-bold tracking-wide backdrop-blur-sm">
-                Register
+                Sign Up
               </Link>
             </div>
           </div>
